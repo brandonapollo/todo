@@ -13,9 +13,7 @@ export default function TodoItem({ todo, isChild = false }: Props) {
   const [showAddChild, setShowAddChild] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(todo.title);
-  const [menuOpen, setMenuOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
   const updateTodo = useUpdateTodo();
   const deleteTodo = useDeleteTodo();
 
@@ -25,17 +23,6 @@ export default function TodoItem({ todo, isChild = false }: Props) {
   useEffect(() => {
     if (editing) inputRef.current?.focus();
   }, [editing]);
-
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handleClick = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [menuOpen]);
 
   const handleEditSubmit = (e?: FormEvent) => {
     e?.preventDefault();
@@ -118,51 +105,51 @@ export default function TodoItem({ todo, isChild = false }: Props) {
           </span>
         )}
 
-        <div className="relative" ref={menuRef}>
+        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Edit */}
           <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className={`w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 transition-colors cursor-pointer text-gray-400 hover:text-gray-600
-              ${menuOpen ? 'bg-gray-200 text-gray-600' : 'opacity-0 group-hover:opacity-100'}
-            `}
+            onClick={() => { setEditTitle(todo.title); setEditing(true); }}
+            className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 transition-colors cursor-pointer text-gray-400 hover:text-gray-600"
+            title="Edit"
           >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <circle cx="10" cy="4" r="1.5" />
-              <circle cx="10" cy="10" r="1.5" />
-              <circle cx="10" cy="16" r="1.5" />
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
             </svg>
           </button>
-          {menuOpen && (
-            <div className="absolute right-0 top-7 z-10 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[120px]">
-              <button
-                onClick={() => { setEditTitle(todo.title); setEditing(true); setMenuOpen(false); }}
-                className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
-              >
-                Edit
-              </button>
-              {!isChild && todo.status === 'pending' && (
-                <button
-                  onClick={() => { setShowAddChild(true); setMenuOpen(false); }}
-                  className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
-                >
-                  Add sub-todo
-                </button>
-              )}
-              {todo.status === 'pending' && (
-                <button
-                  onClick={() => { updateTodo.mutate({ id: todo.id, status: 'cancelled' }); setMenuOpen(false); }}
-                  className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
-                >
-                  Cancel
-                </button>
-              )}
-              <button
-                onClick={() => { deleteTodo.mutate(todo.id); setMenuOpen(false); }}
-                className="w-full text-left px-3 py-1.5 text-sm text-red-500 hover:bg-red-50 cursor-pointer"
-              >
-                Delete
-              </button>
-            </div>
+          {/* Add sub-todo */}
+          {!isChild && todo.status === 'pending' && (
+            <button
+              onClick={() => setShowAddChild(true)}
+              className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 transition-colors cursor-pointer text-gray-400 hover:text-gray-600"
+              title="Add sub-todo"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </button>
           )}
+          {/* Cancel */}
+          {todo.status === 'pending' && (
+            <button
+              onClick={() => updateTodo.mutate({ id: todo.id, status: 'cancelled' })}
+              className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 transition-colors cursor-pointer text-gray-400 hover:text-gray-600"
+              title="Cancel"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+              </svg>
+            </button>
+          )}
+          {/* Delete */}
+          <button
+            onClick={() => deleteTodo.mutate(todo.id)}
+            className="w-6 h-6 flex items-center justify-center rounded hover:bg-red-100 transition-colors cursor-pointer text-gray-400 hover:text-red-500"
+            title="Delete"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+            </svg>
+          </button>
         </div>
       </div>
 
