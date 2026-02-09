@@ -43,6 +43,8 @@ export class DrizzleTodoRepository implements TodoRepository {
       values.status = input.status;
       if (input.status === 'done') {
         values.completedAt = new Date();
+      } else {
+        values.completedAt = null;
       }
     }
     const [todo] = await db.update(todos)

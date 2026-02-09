@@ -26,7 +26,6 @@ function TodoApp() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-12">
-      <h1 className="text-2xl font-semibold mb-8 text-gray-800">Todos</h1>
       <TodoInput />
       <ViewToggle filter={filter} onToggle={setFilter} />
       {isLoading ? (

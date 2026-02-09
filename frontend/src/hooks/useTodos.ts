@@ -12,7 +12,47 @@ export function useCreateTodo() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (title: string) => api.createTodo(title),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['todos'] }),
+    onMutate: async (title) => {
+      await qc.cancelQueries({ queryKey: ['todos'] });
+      const previous = qc.getQueriesData({ queryKey: ['todos'] });
+      const today = new Date().toISOString().split('T')[0];
+      const optimisticTodo: api.Todo = {
+        id: `temp-${Date.now()}`,
+        title,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        completedAt: null,
+        parentId: null,
+        position: 0,
+        createdDate: today,
+      };
+      qc.setQueriesData<api.TodoGroups>({ queryKey: ['todos'] }, (old) => {
+        if (!old) return { groups: { [today]: [optimisticTodo] } };
+        const groups = { ...old.groups };
+        groups[today] = [optimisticTodo, ...(groups[today] || [])];
+        return { groups };
+      });
+      return { previous };
+    },
+    onSuccess: (newTodo) => {
+      qc.setQueriesData<api.TodoGroups>({ queryKey: ['todos'] }, (old) => {
+        if (!old) return old;
+        const groups = { ...old.groups };
+        const date = newTodo.createdDate;
+        groups[date] = (groups[date] || []).map(todo =>
+          todo.id.startsWith('temp-') ? newTodo : todo
+        );
+        return { groups };
+      });
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous) {
+        for (const [key, data] of context.previous) {
+          qc.setQueryData(key, data);
+        }
+      }
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ['todos'] }),
   });
 }
 
@@ -33,7 +73,7 @@ export function useUpdateTodo() {
               return {
                 ...todo,
                 ...data,
-                completedAt: data.status === 'done' ? new Date().toISOString() : todo.completedAt,
+                completedAt: data.status === 'done' ? new Date().toISOString() : data.status === 'pending' ? null : todo.completedAt,
               };
             }
             if (todo.children) {
@@ -41,7 +81,7 @@ export function useUpdateTodo() {
                 ...todo,
                 children: todo.children.map(child =>
                   child.id === id
-                    ? { ...child, ...data, completedAt: data.status === 'done' ? new Date().toISOString() : child.completedAt }
+                    ? { ...child, ...data, completedAt: data.status === 'done' ? new Date().toISOString() : data.status === 'pending' ? null : child.completedAt }
                     : child
                 ),
               };

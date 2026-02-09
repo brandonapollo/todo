@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, type ReactNode, type FormEvent } from 'react';
 import type { Todo } from '../api/todos';
 import { useUpdateTodo, useDeleteTodo } from '../hooks/useTodos';
 import ChildTodoList from './ChildTodoList';
@@ -11,11 +11,45 @@ interface Props {
 
 export default function TodoItem({ todo, isChild = false }: Props) {
   const [showAddChild, setShowAddChild] = useState(false);
+  const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState(todo.title);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const updateTodo = useUpdateTodo();
   const deleteTodo = useDeleteTodo();
 
   const isDone = todo.status === 'done';
   const isCancelled = todo.status === 'cancelled';
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus();
+  }, [editing]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [menuOpen]);
+
+  const handleEditSubmit = (e?: FormEvent) => {
+    e?.preventDefault();
+    const trimmed = editTitle.trim();
+    if (trimmed && trimmed !== todo.title) {
+      updateTodo.mutate({ id: todo.id, title: trimmed });
+    }
+    setEditing(false);
+  };
+
+  const handleEditCancel = () => {
+    setEditTitle(todo.title);
+    setEditing(false);
+  };
 
   return (
     <div className={isChild ? 'ml-6' : ''}>
@@ -47,48 +81,88 @@ export default function TodoItem({ todo, isChild = false }: Props) {
           )}
         </button>
 
-        <span
-          className={`flex-1 text-sm transition-colors
-            ${isDone ? 'line-through text-gray-400' : ''}
-            ${isCancelled ? 'line-through text-gray-400' : ''}
-            ${!isDone && !isCancelled ? 'text-gray-700' : ''}
-          `}
-        >
-          {todo.title}
-        </span>
+        {editing ? (
+          <form onSubmit={handleEditSubmit} className="flex-1">
+            <input
+              ref={inputRef}
+              type="text"
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
+              onBlur={handleEditSubmit}
+              onKeyDown={(e) => e.key === 'Escape' && handleEditCancel()}
+              className="w-full text-sm px-1 py-0.5 rounded border border-sky-300 focus:outline-none focus:ring-1 focus:ring-sky-400 text-gray-700"
+            />
+          </form>
+        ) : (
+          <span
+            onDoubleClick={() => {
+              setEditTitle(todo.title);
+              setEditing(true);
+            }}
+            className={`flex-1 text-sm transition-colors cursor-text
+              ${isDone ? 'line-through text-gray-400' : ''}
+              ${isCancelled ? 'line-through text-gray-400' : ''}
+              ${!isDone && !isCancelled ? 'text-gray-700' : ''}
+            `}
+          >
+            <Linkify text={todo.title} />
+          </span>
+        )}
 
         {todo.completedAt && (
           <span
             className="text-xs text-gray-400"
             title={new Date(todo.completedAt).toLocaleString()}
           >
-            done {new Date(todo.completedAt).toLocaleDateString()}
+            {new Date(todo.completedAt).toLocaleDateString()}
           </span>
         )}
 
-        <div className="hidden group-hover:flex gap-1 items-center">
-          {!isChild && todo.status === 'pending' && (
-            <button
-              onClick={() => setShowAddChild(!showAddChild)}
-              className="text-xs text-gray-400 hover:text-sky-500 px-1.5 py-0.5 rounded hover:bg-sky-50 transition-colors cursor-pointer"
-            >
-              + sub
-            </button>
-          )}
-          {todo.status === 'pending' && (
-            <button
-              onClick={() => updateTodo.mutate({ id: todo.id, status: 'cancelled' })}
-              className="text-xs text-gray-400 hover:text-orange-500 px-1.5 py-0.5 rounded hover:bg-orange-50 transition-colors cursor-pointer"
-            >
-              cancel
-            </button>
-          )}
+        <div className="relative" ref={menuRef}>
           <button
-            onClick={() => deleteTodo.mutate(todo.id)}
-            className="text-xs text-gray-400 hover:text-red-600 px-1.5 py-0.5 rounded hover:bg-red-50 transition-colors cursor-pointer"
+            onClick={() => setMenuOpen(!menuOpen)}
+            className={`w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 transition-colors cursor-pointer text-gray-400 hover:text-gray-600
+              ${menuOpen ? 'bg-gray-200 text-gray-600' : 'opacity-0 group-hover:opacity-100'}
+            `}
           >
-            delete
+            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <circle cx="10" cy="4" r="1.5" />
+              <circle cx="10" cy="10" r="1.5" />
+              <circle cx="10" cy="16" r="1.5" />
+            </svg>
           </button>
+          {menuOpen && (
+            <div className="absolute right-0 top-7 z-10 bg-white rounded-lg shadow-lg border border-gray-200 py-1 min-w-[120px]">
+              <button
+                onClick={() => { setEditTitle(todo.title); setEditing(true); setMenuOpen(false); }}
+                className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+              >
+                Edit
+              </button>
+              {!isChild && todo.status === 'pending' && (
+                <button
+                  onClick={() => { setShowAddChild(true); setMenuOpen(false); }}
+                  className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                >
+                  Add sub-todo
+                </button>
+              )}
+              {todo.status === 'pending' && (
+                <button
+                  onClick={() => { updateTodo.mutate({ id: todo.id, status: 'cancelled' }); setMenuOpen(false); }}
+                  className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                >
+                  Cancel
+                </button>
+              )}
+              <button
+                onClick={() => { deleteTodo.mutate(todo.id); setMenuOpen(false); }}
+                className="w-full text-left px-3 py-1.5 text-sm text-red-500 hover:bg-red-50 cursor-pointer"
+              >
+                Delete
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -101,4 +175,38 @@ export default function TodoItem({ todo, isChild = false }: Props) {
       )}
     </div>
   );
+}
+
+const URL_RE = /(https?:\/\/[^\s]+)/g;
+
+function Linkify({ text }: { text: string }) {
+  const parts: ReactNode[] = [];
+  let lastIndex = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = URL_RE.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.slice(lastIndex, match.index));
+    }
+    const url = match[0];
+    parts.push(
+      <a
+        key={match.index}
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="underline text-sky-600 hover:text-sky-800"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {url}
+      </a>
+    );
+    lastIndex = URL_RE.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+
+  return <>{parts}</>;
 }
