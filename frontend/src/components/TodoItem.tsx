@@ -3,6 +3,7 @@ import type { Todo } from '../api/todos';
 import { useUpdateTodo, useDeleteTodo } from '../hooks/useTodos';
 import ChildTodoList from './ChildTodoList';
 import AddChildInput from './AddChildInput';
+import NoteDialog from './NoteDialog';
 
 interface Props {
   todo: Todo;
@@ -13,12 +14,14 @@ export default function TodoItem({ todo, isChild = false }: Props) {
   const [showAddChild, setShowAddChild] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(todo.title);
+  const [showNote, setShowNote] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const updateTodo = useUpdateTodo();
   const deleteTodo = useDeleteTodo();
 
   const isDone = todo.status === 'done';
   const isCancelled = todo.status === 'cancelled';
+  const hasNote = !!todo.note;
 
   useEffect(() => {
     if (editing) inputRef.current?.focus();
@@ -36,6 +39,11 @@ export default function TodoItem({ todo, isChild = false }: Props) {
   const handleEditCancel = () => {
     setEditTitle(todo.title);
     setEditing(false);
+  };
+
+  const handleNoteSave = (note: string) => {
+    updateTodo.mutate({ id: todo.id, note: note || null });
+    setShowNote(false);
   };
 
   return (
@@ -96,6 +104,25 @@ export default function TodoItem({ todo, isChild = false }: Props) {
           </span>
         )}
 
+        {hasNote && (
+          <div className="relative flex-shrink-0 group/note">
+            <button
+              onClick={() => setShowNote(true)}
+              className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 transition-colors cursor-pointer text-amber-500 hover:text-amber-600"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+              </svg>
+            </button>
+            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover/note:block z-10 pointer-events-none">
+              <div className="bg-gray-800 text-white text-xs rounded-lg px-3 py-2 whitespace-pre-wrap max-w-xs shadow-lg">
+                {todo.note}
+              </div>
+              <div className="w-2 h-2 bg-gray-800 rotate-45 mx-auto -mt-1" />
+            </div>
+          </div>
+        )}
+
         {todo.completedAt && (
           <span
             className="text-xs text-gray-400"
@@ -106,6 +133,18 @@ export default function TodoItem({ todo, isChild = false }: Props) {
         )}
 
         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          {/* Note */}
+          {!hasNote && (
+            <button
+              onClick={() => setShowNote(true)}
+              className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 transition-colors cursor-pointer text-gray-400 hover:text-gray-600"
+              title="Add note"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7.5 8.25h9m-9 3H12m-9.75 1.51c0 1.6 1.123 2.994 2.707 3.227 1.129.166 2.27.293 3.423.379.35.026.67.21.865.501L12 21l2.755-4.133a1.14 1.14 0 01.865-.501 48.172 48.172 0 003.423-.379c1.584-.233 2.707-1.626 2.707-3.228V6.741c0-1.602-1.123-2.995-2.707-3.228A48.394 48.394 0 0012 3c-2.392 0-4.744.175-7.043.513C3.373 3.746 2.25 5.14 2.25 6.741v6.018z" />
+              </svg>
+            </button>
+          )}
           {/* Edit */}
           <button
             onClick={() => { setEditTitle(todo.title); setEditing(true); }}
@@ -159,6 +198,14 @@ export default function TodoItem({ todo, isChild = false }: Props) {
 
       {showAddChild && (
         <AddChildInput parentId={todo.id} onClose={() => setShowAddChild(false)} />
+      )}
+
+      {showNote && (
+        <NoteDialog
+          note={todo.note ?? ''}
+          onSave={handleNoteSave}
+          onClose={() => setShowNote(false)}
+        />
       )}
     </div>
   );

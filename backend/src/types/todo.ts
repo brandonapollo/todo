@@ -6,6 +6,7 @@ export interface Todo {
   completedAt: Date | null;
   parentId: string | null;
   position: number;
+  note: string | null;
   createdDate: string;
   children?: Todo[];
 }
@@ -18,4 +19,5 @@ export interface CreateTodoInput {
 export interface UpdateTodoInput {
   title?: string;
   status?: 'pending' | 'done' | 'cancelled';
+  note?: string | null;
 }
