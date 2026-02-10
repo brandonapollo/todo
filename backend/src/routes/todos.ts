@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import type { TodoRepository } from '../repositories/todo.repository';
+import type { UpdateTodoInput } from '../types/todo';
 
 export function createTodoRoutes(repo: TodoRepository) {
   const app = new Hono();
@@ -36,7 +37,7 @@ export function createTodoRoutes(repo: TodoRepository) {
 
   app.patch('/:id', async (c) => {
     const id = c.req.param('id');
-    const body = await c.req.json<{ title?: string; status?: string }>();
+    const body = await c.req.json<UpdateTodoInput>();
     const todo = await repo.update(id, body);
     if (!todo) return c.json({ error: 'Not found' }, 404);
     return c.json(todo);

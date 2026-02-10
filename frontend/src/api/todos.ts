@@ -8,6 +8,7 @@ export interface Todo {
   completedAt: string | null;
   parentId: string | null;
   position: number;
+  note: string | null;
   createdDate: string;
   children?: Todo[];
 }
@@ -33,7 +34,7 @@ export async function createTodo(title: string): Promise<Todo> {
   return res.json();
 }
 
-export async function updateTodo(id: string, data: { title?: string; status?: string }): Promise<Todo> {
+export async function updateTodo(id: string, data: { title?: string; status?: string; note?: string | null }): Promise<Todo> {
   const res = await fetch(`${API_BASE}/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },

@@ -24,6 +24,7 @@ export function useCreateTodo() {
         completedAt: null,
         parentId: null,
         position: 0,
+        note: null,
         createdDate: today,
       };
       qc.setQueriesData<api.TodoGroups>({ queryKey: ['todos'] }, (old) => {
@@ -59,30 +60,25 @@ export function useCreateTodo() {
 export function useUpdateTodo() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, ...data }: { id: string; title?: string; status?: string }) =>
+    mutationFn: ({ id, ...data }: { id: string; title?: string; status?: string; note?: string | null }) =>
       api.updateTodo(id, data),
     onMutate: async ({ id, ...data }) => {
       await qc.cancelQueries({ queryKey: ['todos'] });
       const previous = qc.getQueriesData({ queryKey: ['todos'] });
+      const patch = data as Partial<api.Todo>;
+      if (data.status === 'done') patch.completedAt = new Date().toISOString();
+      else if (data.status === 'pending') patch.completedAt = null;
       qc.setQueriesData<api.TodoGroups>({ queryKey: ['todos'] }, (old) => {
         if (!old) return old;
         const groups = { ...old.groups };
         for (const date in groups) {
           groups[date] = groups[date].map(todo => {
-            if (todo.id === id) {
-              return {
-                ...todo,
-                ...data,
-                completedAt: data.status === 'done' ? new Date().toISOString() : data.status === 'pending' ? null : todo.completedAt,
-              };
-            }
+            if (todo.id === id) return { ...todo, ...patch };
             if (todo.children) {
               return {
                 ...todo,
                 children: todo.children.map(child =>
-                  child.id === id
-                    ? { ...child, ...data, completedAt: data.status === 'done' ? new Date().toISOString() : data.status === 'pending' ? null : child.completedAt }
-                    : child
+                  child.id === id ? { ...child, ...patch } : child
                 ),
               };
             }

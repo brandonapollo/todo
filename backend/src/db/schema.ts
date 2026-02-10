@@ -10,6 +10,7 @@ export const todos = pgTable('todos', {
   completedAt: timestamp('completed_at', { withTimezone: true }),
   parentId: uuid('parent_id'),
   position: integer('position').notNull().default(0),
+  note: text('note'),
   createdDate: date('created_date').notNull().defaultNow(),
 }, (table) => [
   index('idx_todos_parent_id').on(table.parentId),

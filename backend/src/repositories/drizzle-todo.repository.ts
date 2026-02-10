@@ -39,6 +39,7 @@ export class DrizzleTodoRepository implements TodoRepository {
   async update(id: string, input: UpdateTodoInput): Promise<Todo | null> {
     const values: Record<string, unknown> = {};
     if (input.title !== undefined) values.title = input.title;
+    if (input.note !== undefined) values.note = input.note;
     if (input.status !== undefined) {
       values.status = input.status;
       if (input.status === 'done') {
