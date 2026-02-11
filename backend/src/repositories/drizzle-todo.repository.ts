@@ -12,7 +12,7 @@ export class DrizzleTodoRepository implements TodoRepository {
     }
     const results = await db.select().from(todos)
       .where(and(...conditions))
-      .orderBy(desc(todos.createdDate), todos.position);
+      .orderBy(desc(todos.createdDate), todos.position, todos.createdAt);
     return results as unknown as Todo[];
   }
 
