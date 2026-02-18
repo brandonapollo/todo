@@ -53,14 +53,14 @@ export default function TodoItem({ todo, isChild = false }: Props) {
           onClick={() =>
             updateTodo.mutate({
               id: todo.id,
-              status: isDone ? 'pending' : 'done',
+              status: isDone || isCancelled ? 'pending' : 'done',
             })
           }
           className={`w-5 h-5 rounded-md border-2 flex-shrink-0 flex items-center justify-center transition-colors cursor-pointer
             ${isDone
               ? 'bg-sky-500 border-sky-500 text-white'
               : isCancelled
-                ? 'bg-gray-100 border-gray-300'
+                ? 'bg-gray-100 border-gray-300 hover:border-sky-400'
                 : 'border-gray-300 hover:border-sky-400'
             }`}
         >
@@ -167,7 +167,7 @@ export default function TodoItem({ todo, isChild = false }: Props) {
               </svg>
             </button>
           )}
-          {/* Cancel */}
+          {/* Cancel / Uncancel */}
           {todo.status === 'pending' && (
             <button
               onClick={() => updateTodo.mutate({ id: todo.id, status: 'cancelled' })}
@@ -176,6 +176,17 @@ export default function TodoItem({ todo, isChild = false }: Props) {
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+              </svg>
+            </button>
+          )}
+          {isCancelled && (
+            <button
+              onClick={() => updateTodo.mutate({ id: todo.id, status: 'pending' })}
+              className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 transition-colors cursor-pointer text-gray-400 hover:text-gray-600"
+              title="Restore"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
               </svg>
             </button>
           )}
