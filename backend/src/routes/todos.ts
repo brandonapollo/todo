@@ -7,6 +7,7 @@ export function createTodoRoutes(repo: TodoRepository) {
 
   app.get('/', async (c) => {
     const status = c.req.query('status');
+    const tz = c.req.query('tz') || 'UTC';
     const topLevel = await repo.findAll(status ? { status } : undefined);
 
     const todosWithChildren = await Promise.all(
@@ -18,7 +19,12 @@ export function createTodoRoutes(repo: TodoRepository) {
 
     const grouped: Record<string, typeof todosWithChildren[number][]> = {};
     for (const todo of todosWithChildren) {
-      const date = todo.createdDate;
+      let date: string;
+      try {
+        date = new Date(todo.createdAt).toLocaleDateString('en-CA', { timeZone: tz });
+      } catch {
+        date = todo.createdDate;
+      }
       if (!grouped[date]) grouped[date] = [];
       grouped[date].push(todo);
     }

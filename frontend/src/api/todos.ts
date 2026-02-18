@@ -17,9 +17,12 @@ export interface TodoGroups {
   groups: Record<string, Todo[]>;
 }
 
+const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
 export async function fetchTodos(status?: string): Promise<TodoGroups> {
-  const url = status ? `${API_BASE}?status=${status}` : API_BASE;
-  const res = await fetch(url);
+  const params = new URLSearchParams({ tz });
+  if (status) params.set('status', status);
+  const res = await fetch(`${API_BASE}?${params}`);
   if (!res.ok) throw new Error('Failed to fetch todos');
   return res.json();
 }
