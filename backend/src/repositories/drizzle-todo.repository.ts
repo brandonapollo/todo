@@ -42,6 +42,10 @@ export class DrizzleTodoRepository implements TodoRepository {
     const values: Record<string, unknown> = {};
     if (input.title !== undefined) values.title = input.title;
     if (input.note !== undefined) values.note = input.note;
+    if (input.createdDate !== undefined) {
+      values.createdDate = input.createdDate;
+      values.createdAt = new Date(`${input.createdDate}T12:00:00`);
+    }
     if (input.status !== undefined) {
       values.status = input.status;
       if (input.status === 'done') {

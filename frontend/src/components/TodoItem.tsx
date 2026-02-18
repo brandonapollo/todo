@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, type ReactNode, type FormEvent } from 'react';
-import type { Todo } from '../api/todos';
+import { type Todo, localDateString } from '../api/todos';
 import { useUpdateTodo, useDeleteTodo } from '../hooks/useTodos';
 import ChildTodoList from './ChildTodoList';
 import AddChildInput from './AddChildInput';
@@ -22,6 +22,8 @@ export default function TodoItem({ todo, isChild = false }: Props) {
   const isDone = todo.status === 'done';
   const isCancelled = todo.status === 'cancelled';
   const hasNote = !!todo.note;
+  const today = localDateString();
+  const isToday = todo.createdDate === today;
 
   useEffect(() => {
     if (editing) inputRef.current?.focus();
@@ -164,6 +166,18 @@ export default function TodoItem({ todo, isChild = false }: Props) {
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+              </svg>
+            </button>
+          )}
+          {/* Move to today */}
+          {!isToday && todo.status === 'pending' && (
+            <button
+              onClick={() => updateTodo.mutate({ id: todo.id, createdDate: today })}
+              className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-200 transition-colors cursor-pointer text-gray-400 hover:text-gray-600"
+              title="Move to today"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z" />
               </svg>
             </button>
           )}

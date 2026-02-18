@@ -21,4 +21,5 @@ export interface UpdateTodoInput {
   title?: string;
   status?: 'pending' | 'done' | 'cancelled';
   note?: string | null;
+  createdDate?: string;
 }

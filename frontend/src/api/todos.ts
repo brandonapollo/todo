@@ -42,7 +42,9 @@ export async function createTodo(title: string): Promise<Todo> {
   return res.json();
 }
 
-export async function updateTodo(id: string, data: { title?: string; status?: string; note?: string | null }): Promise<Todo> {
+export { localDateString };
+
+export async function updateTodo(id: string, data: { title?: string; status?: string; note?: string | null; createdDate?: string }): Promise<Todo> {
   const res = await fetch(`${API_BASE}/${id}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
