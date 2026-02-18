@@ -15,7 +15,8 @@ export function useCreateTodo() {
     onMutate: async (title) => {
       await qc.cancelQueries({ queryKey: ['todos'] });
       const previous = qc.getQueriesData({ queryKey: ['todos'] });
-      const today = new Date().toISOString().split('T')[0];
+      const d = new Date();
+      const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
       const optimisticTodo: api.Todo = {
         id: `temp-${Date.now()}`,
         title,

@@ -27,11 +27,11 @@ export function createTodoRoutes(repo: TodoRepository) {
   });
 
   app.post('/', async (c) => {
-    const body = await c.req.json<{ title: string }>();
+    const body = await c.req.json<{ title: string; createdDate?: string }>();
     if (!body.title?.trim()) {
       return c.json({ error: 'Title is required' }, 400);
     }
-    const todo = await repo.create({ title: body.title.trim() });
+    const todo = await repo.create({ title: body.title.trim(), createdDate: body.createdDate });
     return c.json(todo, 201);
   });
 
@@ -52,13 +52,13 @@ export function createTodoRoutes(repo: TodoRepository) {
 
   app.post('/:id/children', async (c) => {
     const parentId = c.req.param('id');
-    const body = await c.req.json<{ title: string }>();
+    const body = await c.req.json<{ title: string; createdDate?: string }>();
     if (!body.title?.trim()) {
       return c.json({ error: 'Title is required' }, 400);
     }
     const parent = await repo.findById(parentId);
     if (!parent) return c.json({ error: 'Parent not found' }, 404);
-    const child = await repo.create({ title: body.title.trim(), parentId });
+    const child = await repo.create({ title: body.title.trim(), parentId, createdDate: body.createdDate });
     return c.json(child, 201);
   });
 

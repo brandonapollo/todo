@@ -24,11 +24,16 @@ export async function fetchTodos(status?: string): Promise<TodoGroups> {
   return res.json();
 }
 
+function localDateString() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 export async function createTodo(title: string): Promise<Todo> {
   const res = await fetch(API_BASE, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title }),
+    body: JSON.stringify({ title, createdDate: localDateString() }),
   });
   if (!res.ok) throw new Error('Failed to create todo');
   return res.json();
@@ -54,7 +59,7 @@ export async function createChildTodo(parentId: string, title: string): Promise<
   const res = await fetch(`${API_BASE}/${parentId}/children`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title }),
+    body: JSON.stringify({ title, createdDate: localDateString() }),
   });
   if (!res.ok) throw new Error('Failed to create child todo');
   return res.json();
