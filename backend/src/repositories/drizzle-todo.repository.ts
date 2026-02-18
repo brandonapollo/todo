@@ -29,10 +29,12 @@ export class DrizzleTodoRepository implements TodoRepository {
   }
 
   async create(input: CreateTodoInput): Promise<Todo> {
-    const [todo] = await db.insert(todos).values({
+    const values: Record<string, unknown> = {
       title: input.title,
       parentId: input.parentId ?? null,
-    }).returning();
+    };
+    if (input.createdDate) values.createdDate = input.createdDate;
+    const [todo] = await db.insert(todos).values(values as any).returning();
     return todo as unknown as Todo;
   }
 

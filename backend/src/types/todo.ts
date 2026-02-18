@@ -14,6 +14,7 @@ export interface Todo {
 export interface CreateTodoInput {
   title: string;
   parentId?: string;
+  createdDate?: string;
 }
 
 export interface UpdateTodoInput {
