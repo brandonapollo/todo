@@ -1,5 +1,10 @@
 import { pgTable, uuid, text, timestamp, integer, date, pgEnum, index } from 'drizzle-orm/pg-core';
 
+export const settings = pgTable('settings', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+});
+
 export const todoStatusEnum = pgEnum('todo_status', ['pending', 'done', 'cancelled', 'deleted']);
 
 export const todos = pgTable('todos', {
